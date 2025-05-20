@@ -1,0 +1,35 @@
+name: Build and Push Docker to Cloudsmith
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  IMAGE_NAME: hello-cloudsmith
+  RELEASE_TAG: latest
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Build Docker Image
+      run: docker build -t $IMAGE_NAME:$RELEASE_TAG .
+
+    - name: Save Docker Image to Tar
+      run: docker save $IMAGE_NAME:$RELEASE_TAG -o $IMAGE_NAME-$RELEASE_TAG.tar
+
+    - name: Push to Cloudsmith
+      uses: cloudsmith-io/action@master
+      with:
+        api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+        command: 'push'
+        format: 'docker'
+        owner: 'simran-parwani-testorg'  # replace if needed
+        repo: 'docker'                   # replace if needed
+        republish: 'true'
+        file: ${{ env.IMAGE_NAME }}-${{ env.RELEASE_TAG }}.tar
